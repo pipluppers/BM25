@@ -16,7 +16,7 @@ public class ranking {
 		for (String s:allTweets) {
 //			tweet_words = s.split("\\s");
 //			total_words += tweet_words.length;		// Add number of words in tweet
-			total_words += s.size();			// Add size of tweet
+			total_words += s.length();			// Add size of tweet
 		}
 		return total_words / allTweets.length;
 	}
@@ -125,6 +125,13 @@ public class ranking {
 		return -1;
 	}
 
+	// Redo of BM25
+	public static double BM25(String term, int ni, int fi, int qfi, int N) {
+		
+
+
+	}
+
 	public static void main(String args[]) throws FileNotFoundException,IOException {
 		// File input
 		// Store contents of file in str
@@ -151,40 +158,86 @@ public class ranking {
 		Scanner user_input = new Scanner(System.in);
 		String user_query = user_input.nextLine();
 		String[] query_terms = user_query.split("\\s");
+		int[] n_i = new int[query_terms.length];
+
 		int qfi,ni,fi;
-		int i,j;
+		int i,j,k,kk;
 		String name,screen_name,loc,hashtag,content,prof,str_wordcount;
+		// TODO Pattern changed
 		String tjson = "{([^}]*)}";
 		String pattern = "\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\]";
 		Pattern tj = Pattern.compile(tjson);
 		Matcher tjm;
 		Pattern p = Pattern.compile(pattern);
 		Matcher m;
-		List<String> alljsons = new ArrayList<String>();	// List to hold all individual jsons
+		List<String> entirejsons = new ArrayList<String>();	// List to hold all individual jsons
 
 		List<int> scoresList = new ArrayList<int>();		// List to hold all the scores
-		for(String term:query_terms) {
+
+		List<String> allTweetJsons = new ArrayList<String>();	// List to hold all tweet jsons that query appears in	
+		List<String> allContents = new ArrayList<String>();	// Holds all the contents of the above list
+
+		int sz = 0;
+		String jason,content;
+		boolean dontadd;
+		double score = 0.0;	// Going to add to this at the end of each iteration of the loop
+		for (k = 0; k < query_terms.length; ++k) {
+			//if the term equals something in allkeyvalues, gt all the tweets and add to a list
+			//loop through list later when done. Calculate for each query term
+
+			n_i[k] = 0;	// Initialize the ni for the this term as 0
+
 			qfi = 0;
 			for (String i : query_terms) {
-				if (term.equals(i)) ++qfi;		// It's not going to be 0
+				if (query_terms[k].equals(i)) ++qfi;		// It's not going to be 0
 			}
 
 			for (i = 0; i < allkeyvalues.size(); ++i) {
+				// TODO Split off something else
 				String[] keyvalue = allkeyvalues.get(i).split("\\t");
+
+				// if this term exists in any of the tweets
 				if (term.equals(keyvalue[0])) {
+					sz = 0;
 					alljsons.clear();				// Empty jsons
 					tmj = tj.matcher(keyvalue[1]);		// Split into individual jsons
-					while(tjm.find()) alljsons.add(tjm.group(1));	// Add new jsons over
-					
-					ni = alljsons.size();
+					while(tjm.find()) {
+						++sz;
+						jason = tjm.group(1);
+						entirejsons.add(jason);	// Add new jsons over
+						m = p.matcher(jason);		// Break json into 7 parts
+						content = m.group(7);
+						if (allContents.size() == 0) {
+							allContents.add(content);
+							entirejsons.add(jason);
+						}
+						else {
+							dontadd = False;
+							for (kk = 0; kk < allContents.size();++kk) {
+								if (content.equals(allContents[k])) {
+									dontadd = True;
+								}
+							}
+							if (dontadd == False) {
+								allContents.add(content);
+								entirejsons.add(jason);
+							}
+						}
+								
+					}
+					//n_i[k] = alljsons.size();		// Update n_i if it exists in any tweet
+					n_i[k] = sz;
+
+//	--------------Potentially wrong
 					for (j = 0; j < alljsons.size(); ++j) {
 						m = p.matcher(alljsons.get(i));	// Split json into 7 parts
 						fi = Integer.parseInt(m.group(7));
 
-						scoresList.add(BM25(term, ni, fi, qfi, N));
+						scoresList.add(BM25(query_terms[k], ni, fi, qfi, N));
 					}			
 				}
 			}
+			score += 
 		}
 
 //	---------------------------------------Might Remove Below this line -------------------------------
