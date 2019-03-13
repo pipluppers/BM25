@@ -55,17 +55,53 @@ public class ranking {
 	}
 
 	public static void main(String args[]) {
-		double N = 1000;
+		
+		// Test Query and Tweets
 		String query = "Hello, my name is Alex";
 		String b = "Job Pop my is Hello,";
 		String c = "my Alex Alex name";
-		String[] tweets = new String[2];
-		tweets[0] = b; tweets[1] = c;
+		String d = "Hell This should have nothing in common";
+		String[] tweets = new String[3];
+		tweets[0] = b; tweets[1] = c; tweets[2] = d;
 		double avg_tweets_l = avgdl(tweets);
 		System.out.println("Average tweet length: " + avg_tweets_l);
+		
 
-		for (String tweet:tweets) {
-			System.out.println("Tweet Text: " + tweet + "\n\tScore: "+ BM25(query, tweet, tweets, avg_tweets_l));
+		// Score all tweets
+		double[] scoresList = new double[tweets.length];
+		int i = 0;
+		for (i = 0; i < tweets.length; ++i) {
+			// BM25(Query, Tweet, List of all tweets, avg tweet length)
+			scoresList[i] = BM25(query, tweets[i], tweets, avg_tweets_l);
+			//System.out.println("Tweet Text: " + tweets[i] + "\n\tScore: " + scoresList[i]);
+		}
+
+		
+		// Rank tweets in order
+		int n = 3;			// TODO Update n to 100 later to find top 100
+		double maxScore = 0.0;
+		double prevMax = 10000;	// so we don't find the same max score
+		double[] topnScores = new double[n];
+		String[] topnTweets = new String[n];
+		int j = 0;
+		int ind = 0;		// Store the index of where we found the max
+		for (i = 0; i < n; ++i) {	// Finding top 2
+			maxScore = -1.0;
+			for (j = 0; j < tweets.length; ++j) {
+				if (maxScore < scoresList[j] && scoresList[j] < prevMax) {
+					maxScore = scoresList[j];
+					ind = j;
+				}
+			}
+			prevMax = maxScore;	// Update previous max so we don't register this as max again
+			topnScores[i] = scoresList[ind];
+			topnTweets[i] = tweets[ind];
+		}
+
+		// Print top n Tweets		
+		System.out.println("Top " + n + " tweets:");
+		for (i = 0; i < topnScores.length; ++i) {
+			System.out.println(i+1 + ": " + topnTweets[i] + "\n\tScore: " + topnScores[i]);
 		}
 	}
 }
