@@ -1,11 +1,16 @@
 import java.io.*;
 import java.lang.Math;
+import java.util.Scanner;
 
 public class ranking {
 
 	public static double avgdl(String[] allTweets) {
 		double total_words = 0.0;
-		for (String s:allTweets) total_words += s.length();
+		String[] tweet_words;
+		for (String s:allTweets) {
+			tweet_words = s.split("\\s");
+			total_words += tweet_words.length;
+		}
 		return total_words / allTweets.length;
 	}
 
@@ -54,15 +59,9 @@ public class ranking {
 		return score;
 	}
 
-	public static void main(String args[]) {
+	// Returns the top n tweets for a given query
+	public static String[] TopNTweets(String query, String[] tweets, int n) {
 		
-		// Test Query and Tweets
-		String query = "Hello, my name is Alex";
-		String b = "Job Pop my is Hello,";
-		String c = "my Alex Alex name";
-		String d = "Hell This should have nothing in common";
-		String[] tweets = new String[3];
-		tweets[0] = b; tweets[1] = c; tweets[2] = d;
 		double avg_tweets_l = avgdl(tweets);
 		System.out.println("Average tweet length: " + avg_tweets_l);
 		
@@ -78,7 +77,6 @@ public class ranking {
 
 		
 		// Rank tweets in order
-		int n = 3;			// TODO Update n to 100 later to find top 100
 		double maxScore = 0.0;
 		double prevMax = 10000;	// so we don't find the same max score
 		double[] topnScores = new double[n];
@@ -103,5 +101,47 @@ public class ranking {
 		for (i = 0; i < topnScores.length; ++i) {
 			System.out.println(i+1 + ": " + topnTweets[i] + "\n\tScore: " + topnScores[i]);
 		}
+		return topnTweets;
 	}
+
+	// TODO Return Tweet JSONs
+	public static int search(String query, String[] topntweets) {
+		int query_rank = -1;
+		for (int i = 0; i < topntweets.length; ++i) {
+			if (query.equals(topntweets[i])) {
+				query_rank = i + 1;
+				return query_rank;
+			}
+		}
+		return -1;
+	}
+
+	public static void main(String args[]) {
+		String query = "Hello, my name is Alex";
+		String a = "Job pop my is Hello,";
+		String b = "Piplup Alex Alex Tim";
+		String c = "Mango Honeydew Strawberry Chocolate";
+		String d = "Poppy Seeds is adorable";
+		int n = 4;		// TODO Update this to 100 later to get top 100 tweets
+		String[] tweets = new String[n];
+		tweets[0] = a; tweets[1] = b; tweets[2] = c; tweets[3] = d;
+
+		// Top n Tweets
+		String[] topnTweets;
+		topnTweets = TopNTweets(query, tweets, n);
+
+		for (int i = 0; i < topnTweets.length; ++i) {
+			System.out.println(i+1 + ": " + topnTweets[i]);
+		}
+
+		Scanner user_input = new Scanner(System.in);
+		String user_query = "";
+		while (user_input.hasNext()) user_query += user_input.next();
+		System.out.println("User query is: " + user_query);
+		int x = search(user_query, topnTweets);
+		if (x == -1) System.out.println("User query not found in top " + n + " tweets");
+		else System.out.println("Found user query at rank " + x);
+
+	}
+
 }
