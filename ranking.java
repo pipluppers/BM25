@@ -8,8 +8,6 @@ import java.util.*;
 
 public class ranking {
 
-	// Call TopNTweets(query, alltweets, n). BM25 will happen under this function for all of the tweets
-
 	public static double avgdl(List<String> allTweets) {
 		double total_words = 0.0;
 //		String[] tweet_words;
@@ -21,15 +19,7 @@ public class ranking {
 		return total_words / allTweets.size();
 	}
 
-	// Calculate ni incorrectly (?) ni is # of docs the query term appears in
-	public static double tweet_num(String[] allTweets, String query_term) {
-		double ni = 0;
-		for (String s:allTweets) {
-			if (s.equals(query_term)) ni++;
-		}
-		return ni; 
-	}
-
+/*
 	public static double BM25(String Query, String Tweet, String[] allTweets, double avg_doc_length) {
 //	public static double BM25(String Query, String Tweet, int N, int ni, int fi, double avg_doc_length) {
 		double k1 = 1.2;
@@ -67,11 +57,12 @@ public class ranking {
 		}
 		return score;
 	}
+*/
 
+/*
 	// Returns the top n tweets for a given query
 	public static String[] TopNTweets(String query, String[] tweets, int n) {
 		
-		double avg_tweets_l = avgdl(tweets);
 		System.out.println("Average tweet length: " + avg_tweets_l);
 		
 
@@ -112,12 +103,15 @@ public class ranking {
 		}
 		return topnTweets;
 	}
+*/
 
-	// TODO Return Tweet JSONs
-	public static int search(String query, String[] topntweets) {
+	// TODO Return index of Tweet JSONs
+	// Exact Search
+	// Return -1 if not found
+	public static int search(String query, String[] topntweetsjsons) {
 		int query_rank = -1;
-		for (int i = 0; i < topntweets.length; ++i) {
-			if (query.equals(topntweets[i])) {
+		for (int i = 0; i < topntweetsjsons.length; ++i) {
+			if (query.equals(topntweetsjsons[i])) {
 				query_rank = i + 1;
 				return query_rank;
 			}
@@ -132,21 +126,16 @@ public class ranking {
 		String[] tweet_terms = tweet.split("\\s");
 		String[] query_terms = query.split("\\s");
 		int i,j;
-		doc_length = tweet.length();	// Length of the entire tweet (NOT the number of words)
-		double x,y,z;
+		double doc_length = tweet.length();	// Length of the entire tweet (NOT the number of words)
+		double x,y,z,fi;
 		double score = 0.0;
-		double k1 = 1.2;
-		double k2 = 100;
-		double b = 0.75;
+		double k1 = 1.2; double k2 = 100; double b = 0.75;
 		double K = k1 * ( (1.0 - b) + b * (doc_length / avg_doc_length));
-		double fi;
 		for (i = 0; i < query_terms.length; ++i) {
-			// fi is the number of times the query term appears in the tweet
-			fi = 0;
+			fi = 0;		// fi is the number of times the query term appears in the tweet
 			for (j = 0; j < tweet_terms.length; ++j) {
 				if (query_terms[i].equals(tweet_terms[i])) ++fi;
 			}
-
 			x = Math.log10( (N - ni[i] + 0.5) / (ni[i] + 0.5) );
 			y = ((k1 + 1) * fi) / (K + fi);
 			z = ((k2 + 1) * qfi[i]) / (k2 + qfi[i]);
@@ -163,8 +152,6 @@ public class ranking {
 		String st; String str = "";
 		while ((st = br.readLine()) != null) str += st;
 		//System.out.println(str);
-
-
 		
 		/*
 			Term	{[Name],[ScreenName],[Location],[Hashtag],[Content],[Profile_img_url],[wordcount],...}
@@ -195,8 +182,6 @@ public class ranking {
 		Pattern p = Pattern.compile(pattern);
 		Matcher m;
 		List<String> entirejsons = new ArrayList<String>();	// List to hold all individual jsons
-
-		List<int> scoresList = new ArrayList<int>();		// List to hold all the scores
 
 		List<String> allTweetJsons = new ArrayList<String>();	// List to hold all tweet jsons that query appears in	
 		List<String> allContents = new ArrayList<String>();	// Holds all the contents of the above list
@@ -230,7 +215,7 @@ public class ranking {
 						++sz;
 						jason = tjm.group(1);
 						m = p.matcher(jason);		// Break json into 7 parts
-						content = m.group(7);
+						content = m.group(7);		// TODO
 						if (allContents.size() == 0) {
 							allContents.add(content);
 							entirejsons.add(jason);
@@ -267,75 +252,18 @@ public class ranking {
 			qfi_all[i] = qfi;
 		}
 		double avg_doc_length = avgdl(allContents);
+
 		// Loop through the tweets now
 		// Have a score for each tweet
+		double[] scoresList = new double[entirejsons.size()];	
 		for (i = 0; i < entirejsons.size(); ++i) {
-			score = 0.0;
-
-			// Loop through query and calculate the score for each tweet
-			for (j = 0; j < query_terms.length; ++j) {
-				// BM25 (query, tweet, ni, N) 
-				BM25(user_query, allContents.get(j), n_i, qfi_all, N,avg_doc_length);
-
-			}
-
-
-
-
-		}
-//	--------------Potentially wrong
-					for (j = 0; j < alljsons.size(); ++j) {
-						m = p.matcher(alljsons.get(i));	// Split json into 7 parts
-						fi = Integer.parseInt(m.group(7));
-
-						scoresList.add(BM25(query_terms[k], ni, fi, qfi, N));
-					}			
-				}
-			}
-			score += 
+			scoresList[i] = BM25(user_query, allContents.get(i), n_i, qfi_all, N, avg_doc_length);
 		}
 
-//	---------------------------------------Might Remove Below this line -------------------------------
-		// Loop through all key-value pairs
-		for (int i = 0; i < allkeyvalues.size(); ++i) {
-
-			String[] keyvaluepair = allkeyvalues.get(i).split("\\t");
-			String term = keyvaluepair[0];
-			String tweetjson = keyvaluepair[1];
-
-			String name,screen_name,loc,hashtag,content,profile,str_wordcount;
-			int wordcount;
-			String tjson = "{([^}]*)}";
-
-			// Get list of all Tweet Jsons. Store in list jsons
-			List<String> jsons = new ArrayList<String>();	// Arrays don't have an add or push_back
-			Pattern tj = Pattern.compile(tjson);
-			Matcher tjm = tj.matcher(tweetjson);
-			while(tjm.find()) jsons.add(tjm.group(1));
-			int ni = jsons.size();			
-
-			//	Copy list to String array
-			String[] alltweetjsons = new String[jsons.size()];
-			for (int i = 0; i < jsons.size(); ++i) {
-				alltweetjsons[i] = jsons.get(i);
-			}
-		String pattern = "\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\]";
-
-		Pattern p = Pattern.compile(pattern);
-		Matcher m;
-		// Loop through all jsons.
-		for (int i = 0; i < jsons.size(); ++i) {
-			m = p.matcher(jsons.get(i));
-			while (m.find()) {
-				name = m.group(1); screen_name = m.group(2); loc = m.group(3); hashtag = m.group(4); content = m.group(5);
-				profile = m.group(6); wordcount = Integer.parseInt(m.group(7));
-			}
-
-		// Get query from user
-		// TopNTweets(query, tweets, 
- 		*/
+		// Ranking time		
 
 
+*/
 
 		// Test query and tweets. Works
 		String query = "Hello, my name is Alex";
@@ -349,22 +277,22 @@ public class ranking {
 
 		// Top n Tweets
 		String[] topnTweets;
-		topnTweets = TopNTweets(query, tweets, n);
+//		topnTweets = TopNTweets(query, tweets, n);
 
-		for (int i = 0; i < topnTweets.length; ++i) {
-			System.out.println(i+1 + ": " + topnTweets[i]);
-		}
+//		for (int i = 0; i < topnTweets.length; ++i) {
+//			System.out.println(i+1 + ": " + topnTweets[i]);
+//		}
 
 		// Get a single line of input from the user
-		System.out.print("Enter query: ");
-		Scanner user_input = new Scanner(System.in);
-		String user_query = "";
-		user_query += user_input.nextLine();
-		System.out.println("User query: " + user_query);
+//		System.out.print("Enter query: ");
+//		Scanner user_input = new Scanner(System.in);
+//		String user_query = "";
+//		user_query += user_input.nextLine();
+//		System.out.println("User query: " + user_query);
 
-		int x = search(user_query, topnTweets);
-		if (x == -1) System.out.println("User query not found in top " + n + " tweets");
-		else System.out.println("Found user query at rank " + x);
+//		int x = search(user_query, topnTweets);
+//		if (x == -1) System.out.println("User query not found in top " + n + " tweets");
+//		else System.out.println("Found user query at rank " + x);
 
 	}
 }
