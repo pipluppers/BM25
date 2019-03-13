@@ -1,8 +1,14 @@
 import java.io.*;
 import java.lang.Math;
+import java.lang.Integer;
 import java.util.Scanner;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.util.*;
 
 public class ranking {
+
+	// Call TopNTweets(query, alltweets, n). BM25 will happen under this function for all of the tweets
 
 	public static double avgdl(String[] allTweets) {
 		double total_words = 0.0;
@@ -125,6 +131,60 @@ public class ranking {
 		while ((st = br.readLine()) != null) str += st;
 		//System.out.println(str);
 
+
+		
+		/*
+			Term	{[Name],[ScreenName],[Location],[Hashtag],[Content],[Profile_img_url],[wordcount],...}
+		
+			st will be a single line. Split via tabs to get the term
+
+		List<String> allkeyvalues= new ArrayList<String>();		// No add or pushback for arrays
+		while ((st = br.readLine()) != null) {
+			allkeyvalues.add(st);
+		}
+		int N = allkeyvalues.size();
+
+		// Loop through all key-value pairs
+		for (int i = 0; i < allkeyvalues.size(); ++i) {
+
+			String[] keyvaluepair = allkeyvalues.get(i).split("\\t");
+			String term = keyvaluepair[0];
+			String tweetjson = keyvaluepair[1];
+
+			String name,screen_name,loc,hashtag,content,profile,str_wordcount;
+			int wordcount;
+			String tjson = "{([^}]*)}";
+
+			// Get list of all Tweet Jsons. Store in list jsons
+			List<String> jsons = new ArrayList<String>();	// Arrays don't have an add or push_back
+			Pattern tj = Pattern.compile(tjson);
+			Matcher tjm = tj.matcher(tweetjson);
+			while(tjm.find()) jsons.add(tjm.group(1));
+			int ni = jsons.size();			
+
+			//	Copy list to String array
+			String[] alltweetjsons = new String[jsons.size()];
+			for (int i = 0; i < jsons.size(); ++i) {
+				alltweetjsons[i] = jsons.get(i);
+			}
+
+		String pattern = "\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\]";
+		Pattern p = Pattern.compile(pattern);
+		Matcher m;
+		// Loop through all jsons.
+		for (int i = 0; i < jsons.size(); ++i) {
+			m = p.matcher(jsons.get(i));
+			while (m.find()) {
+				name = m.group(1); screen_name = m.group(2); loc = m.group(3); hashtag = m.group(4); content = m.group(5);
+				profile = m.group(6); wordcount = Integer.parseInt(m.group(7));
+			}
+
+		// Get query from user
+		// TopNTweets(query, tweets, 
+ 		*/
+
+
+
 		// Test query and tweets. Works
 		String query = "Hello, my name is Alex";
 		String a = "Job pop my is Hello,";
@@ -155,5 +215,4 @@ public class ranking {
 		else System.out.println("Found user query at rank " + x);
 
 	}
-
 }
