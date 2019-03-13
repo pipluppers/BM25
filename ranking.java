@@ -116,7 +116,16 @@ public class ranking {
 		return -1;
 	}
 
-	public static void main(String args[]) {
+	public static void main(String args[]) throws FileNotFoundException,IOException {
+		// File input
+		// Store contents of file in str
+		File f = new File("test.txt");
+		BufferedReader br = new BufferedReader(new FileReader(f));
+		String st; String str = "";
+		while ((st = br.readLine()) != null) str += st;
+		//System.out.println(str);
+
+		// Test query and tweets. Works
 		String query = "Hello, my name is Alex";
 		String a = "Job pop my is Hello,";
 		String b = "Piplup Alex Alex Tim";
@@ -135,6 +144,7 @@ public class ranking {
 		}
 
 		// Get a single line of input from the user
+		System.out.print("Enter query: ");
 		Scanner user_input = new Scanner(System.in);
 		String user_query = "";
 		user_query += user_input.nextLine();
