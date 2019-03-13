@@ -134,10 +134,12 @@ public class ranking {
 			System.out.println(i+1 + ": " + topnTweets[i]);
 		}
 
+		// Get a single line of input from the user
 		Scanner user_input = new Scanner(System.in);
 		String user_query = "";
-		while (user_input.hasNext()) user_query += user_input.next();
-		System.out.println("User query is: " + user_query);
+		user_query += user_input.nextLine();
+		System.out.println("User query: " + user_query);
+
 		int x = search(user_query, topnTweets);
 		if (x == -1) System.out.println("User query not found in top " + n + " tweets");
 		else System.out.println("Found user query at rank " + x);
