@@ -147,6 +147,47 @@ public class ranking {
 		}
 		int N = allkeyvalues.size();
 
+		// Get query from user
+		Scanner user_input = new Scanner(System.in);
+		String user_query = user_input.nextLine();
+		String[] query_terms = user_query.split("\\s");
+		int qfi,ni,fi;
+		int i,j;
+		String name,screen_name,loc,hashtag,content,prof,str_wordcount;
+		String tjson = "{([^}]*)}";
+		String pattern = "\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\]";
+		Pattern tj = Pattern.compile(tjson);
+		Matcher tjm;
+		Pattern p = Pattern.compile(pattern);
+		Matcher m;
+		List<String> alljsons = new ArrayList<String>();	// List to hold all individual jsons
+
+		List<int> scoresList = new ArrayList<int>();		// List to hold all the scores
+		for(String term:query_terms) {
+			qfi = 0;
+			for (String i : query_terms) {
+				if (term.equals(i)) ++qfi;		// It's not going to be 0
+			}
+
+			for (i = 0; i < allkeyvalues.size(); ++i) {
+				String[] keyvalue = allkeyvalues.get(i).split("\\t");
+				if (term.equals(keyvalue[0])) {
+					alljsons.clear();				// Empty jsons
+					tmj = tj.matcher(keyvalue[1]);		// Split into individual jsons
+					while(tjm.find()) alljsons.add(tjm.group(1));	// Add new jsons over
+					
+					ni = alljsons.size();
+					for (j = 0; j < alljsons.size(); ++j) {
+						m = p.matcher(alljsons.get(i));	// Split json into 7 parts
+						fi = Integer.parseInt(m.group(7));
+
+						scoresList.add(BM25(term, ni, fi, qfi, N));
+					}			
+				}
+			}
+		}
+
+//	---------------------------------------Might Remove Below this line -------------------------------
 		// Loop through all key-value pairs
 		for (int i = 0; i < allkeyvalues.size(); ++i) {
 
@@ -170,8 +211,8 @@ public class ranking {
 			for (int i = 0; i < jsons.size(); ++i) {
 				alltweetjsons[i] = jsons.get(i);
 			}
-
 		String pattern = "\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\]";
+
 		Pattern p = Pattern.compile(pattern);
 		Matcher m;
 		// Loop through all jsons.
