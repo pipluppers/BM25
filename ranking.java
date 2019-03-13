@@ -10,7 +10,7 @@ public class ranking {
 
 	// Call TopNTweets(query, alltweets, n). BM25 will happen under this function for all of the tweets
 
-	public static double avgdl(String[] allTweets) {
+	public static double avgdl(List<String> allTweets) {
 		double total_words = 0.0;
 //		String[] tweet_words;
 		for (String s:allTweets) {
@@ -18,7 +18,7 @@ public class ranking {
 //			total_words += tweet_words.length;		// Add number of words in tweet
 			total_words += s.length();			// Add size of tweet
 		}
-		return total_words / allTweets.length;
+		return total_words / allTweets.size();
 	}
 
 	// Calculate ni incorrectly (?) ni is # of docs the query term appears in
@@ -126,10 +126,22 @@ public class ranking {
 	}
 
 	// Redo of BM25
-	public static double BM25(String term, int ni, int fi, int qfi, int N) {
-		
-
-
+	// Recalculate fi and qfi
+	// n_i is an array with the same size of the number of words in the query
+	public static double BM25(String query, String tweet, int[] ni, int N, double avg_doc_length) {
+		String[] tweet = tweet.split("\\s");
+		String[] query_terms = query.split("\\s");
+		int i,j;
+		doc_length = 
+		double x,y,z;
+		double k1 = 1.2;
+		double k2 = 100;
+		double b = 0.75;
+		double K = k1 * ( (1.0 - b) + b * (doc_length / avg_doc_length));
+		for (i = 0; i < query_terms.length; ++i) {
+			x = Math.log10( (N - ni[i] + 0.5) / (ni[i] + 0.5) );
+			y = ((k1
+		}	
 	}
 
 	public static void main(String args[]) throws FileNotFoundException,IOException {
@@ -181,13 +193,14 @@ public class ranking {
 		String jason,content;
 		boolean dontadd;
 		double score = 0.0;	// Going to add to this at the end of each iteration of the loop
+
+		// Calculate n_i values and build the list of tweets/documents
 		for (k = 0; k < query_terms.length; ++k) {
 			//if the term equals something in allkeyvalues, gt all the tweets and add to a list
 			//loop through list later when done. Calculate for each query term
 
 			n_i[k] = 0;	// Initialize the ni for the this term as 0
 
-			qfi = 0;
 			for (String i : query_terms) {
 				if (query_terms[k].equals(i)) ++qfi;		// It's not going to be 0
 			}
@@ -196,7 +209,7 @@ public class ranking {
 				// TODO Split off something else
 				String[] keyvalue = allkeyvalues.get(i).split("\\t");
 
-				// if this term exists in any of the tweets
+				// if this term exists in any of the tweets. Should only happen once per query term
 				if (term.equals(keyvalue[0])) {
 					sz = 0;
 					alljsons.clear();				// Empty jsons
@@ -204,7 +217,6 @@ public class ranking {
 					while(tjm.find()) {
 						++sz;
 						jason = tjm.group(1);
-						entirejsons.add(jason);	// Add new jsons over
 						m = p.matcher(jason);		// Break json into 7 parts
 						content = m.group(7);
 						if (allContents.size() == 0) {
@@ -214,10 +226,14 @@ public class ranking {
 						else {
 							dontadd = False;
 							for (kk = 0; kk < allContents.size();++kk) {
-								if (content.equals(allContents[k])) {
+								// If this tweet exists in our jsons already, don't add it
+								if (content.equals(allContents.get(k))) {
 									dontadd = True;
+									break;
 								}
 							}
+							// Add tweet text to allContents
+							// Add entire tweet JSON to entirejsons
 							if (dontadd == False) {
 								allContents.add(content);
 								entirejsons.add(jason);
@@ -225,9 +241,29 @@ public class ranking {
 						}
 								
 					}
-					//n_i[k] = alljsons.size();		// Update n_i if it exists in any tweet
-					n_i[k] = sz;
+					n_i[k] = sz;	// Should contain the n_values for every single query term
+					i = allkeyvalues.size();	// Stop the loop early. Term should only match a single key
+				}
+			}
+		}
 
+		double avg_doc_length = avgdl(allContents);
+		// Loop through the tweets now
+		// Have a score for each tweet
+		for (i = 0; i < entirejsons.size(); ++i) {
+			score = 0.0;
+
+			// Loop through query and calculate the score for each tweet
+			for (j = 0; j < query_terms.length; ++j) {
+				// BM25 (query, tweet, ni, N) 
+				BM25(user_query, allContents.get(j), n_i, N,avg_doc_length);
+
+			}
+
+
+
+
+		}
 //	--------------Potentially wrong
 					for (j = 0; j < alljsons.size(); ++j) {
 						m = p.matcher(alljsons.get(i));	// Split json into 7 parts
