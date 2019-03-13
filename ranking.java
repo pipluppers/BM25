@@ -126,24 +126,33 @@ public class ranking {
 	}
 
 	// Redo of BM25
-	// Recalculate fi and qfi
-	// n_i is an array with the same size of the number of words in the query
+	// Recalculate fi
+	// n_i and qfi are arrays with the same size of the number of words in the query
 	public static double BM25(String query, String tweet, int[] ni, int[] qfi, int N, double avg_doc_length) {
-		String[] tweet = tweet.split("\\s");
+		String[] tweet_terms = tweet.split("\\s");
 		String[] query_terms = query.split("\\s");
 		int i,j;
-		doc_length = tweet.length();
+		doc_length = tweet.length();	// Length of the entire tweet (NOT the number of words)
 		double x,y,z;
+		double score = 0.0;
 		double k1 = 1.2;
 		double k2 = 100;
 		double b = 0.75;
 		double K = k1 * ( (1.0 - b) + b * (doc_length / avg_doc_length));
+		double fi;
 		for (i = 0; i < query_terms.length; ++i) {
+			// fi is the number of times the query term appears in the tweet
+			fi = 0;
+			for (j = 0; j < tweet_terms.length; ++j) {
+				if (query_terms[i].equals(tweet_terms[i])) ++fi;
+			}
 
 			x = Math.log10( (N - ni[i] + 0.5) / (ni[i] + 0.5) );
 			y = ((k1 + 1) * fi) / (K + fi);
 			z = ((k2 + 1) * qfi[i]) / (k2 + qfi[i]);
-		}	
+			score += (x*y*z);
+		}
+		return score;
 	}
 
 	public static void main(String args[]) throws FileNotFoundException,IOException {
