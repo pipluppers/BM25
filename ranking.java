@@ -128,19 +128,21 @@ public class ranking {
 	// Redo of BM25
 	// Recalculate fi and qfi
 	// n_i is an array with the same size of the number of words in the query
-	public static double BM25(String query, String tweet, int[] ni, int N, double avg_doc_length) {
+	public static double BM25(String query, String tweet, int[] ni, int[] qfi, int N, double avg_doc_length) {
 		String[] tweet = tweet.split("\\s");
 		String[] query_terms = query.split("\\s");
 		int i,j;
-		doc_length = 
+		doc_length = tweet.length();
 		double x,y,z;
 		double k1 = 1.2;
 		double k2 = 100;
 		double b = 0.75;
 		double K = k1 * ( (1.0 - b) + b * (doc_length / avg_doc_length));
 		for (i = 0; i < query_terms.length; ++i) {
+
 			x = Math.log10( (N - ni[i] + 0.5) / (ni[i] + 0.5) );
-			y = ((k1
+			y = ((k1 + 1) * fi) / (K + fi);
+			z = ((k2 + 1) * qfi[i]) / (k2 + qfi[i]);
 		}	
 	}
 
@@ -173,6 +175,7 @@ public class ranking {
 		int[] n_i = new int[query_terms.length];
 
 		int qfi,ni,fi;
+		int[] qfi_all = new int[query_terms.length];
 		int i,j,k,kk;
 		String name,screen_name,loc,hashtag,content,prof,str_wordcount;
 		// TODO Pattern changed
@@ -247,6 +250,13 @@ public class ranking {
 			}
 		}
 
+		for (i = 0; i < query_terms.length; ++i) {
+			qfi = 0;
+			for (j = 0; j < query_terms.length; ++j) {
+				if (query_terms[i].equals(query_terms[j])) ++qfi;
+			}
+			qfi_all[i] = qfi;
+		}
 		double avg_doc_length = avgdl(allContents);
 		// Loop through the tweets now
 		// Have a score for each tweet
@@ -256,7 +266,7 @@ public class ranking {
 			// Loop through query and calculate the score for each tweet
 			for (j = 0; j < query_terms.length; ++j) {
 				// BM25 (query, tweet, ni, N) 
-				BM25(user_query, allContents.get(j), n_i, N,avg_doc_length);
+				BM25(user_query, allContents.get(j), n_i, qfi_all, N,avg_doc_length);
 
 			}
 
