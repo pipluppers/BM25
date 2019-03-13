@@ -144,32 +144,54 @@ public class ranking {
 		return score;
 	}
 
+	// Returns the top n tweet JSONs
+	public static String[] toptweets(int n, List<String> jsonsList, double[] scoresList) {
+		double max;
+		double prevMax = 1000000;
+		String[] topnjsons = new String[n];
+		int i,j,ind;
+		for (i = 0; i < n; ++i) {
+			max = -1.0;
+			ind = 0;
+			for (j = 0; j < scoresList.length; ++j) {
+				if (max < scoresList[j] && scoresList[j] < prevMax) {	// Don't get previous maxes
+					max = scoresList[j];
+					ind = j;		// Index of largest score
+				}
+			}
+			topnjsons[i] = jsonsList.get(ind);	// Get the corresponding json with the largest score
+			prevMax = max;
+		}
+		return topnjsons;	
+	}
+
 	public static void main(String args[]) throws FileNotFoundException,IOException {
 		// File input
 		// Store contents of file in str
 		File f = new File("test.txt");
 		BufferedReader br = new BufferedReader(new FileReader(f));
-		String st; String str = "";
-		while ((st = br.readLine()) != null) str += st;
-		//System.out.println(str);
+		String st;
 		
-		/*
-			Term	{[Name],[ScreenName],[Location],[Hashtag],[Content],[Profile_img_url],[wordcount],...}
 		
-			st will be a single line. Split via tabs to get the term
+		//Term	{[Name],[ScreenName],[Location],[Hashtag],[Content],[Profile_img_url],[wordcount],...}	
+		//st will be a single line. Split via tabs to get the term
 
 		List<String> allkeyvalues= new ArrayList<String>();		// No add or pushback for arrays
 		while ((st = br.readLine()) != null) {
 			allkeyvalues.add(st);
 		}
+		// TODO Split allkeyvalues by newline? Whatever separates the key-value pairs
 		int N = allkeyvalues.size();
+		System.out.println("N is " + N);
 
 		// Get query from user
+		System.out.println("Enter your query: ");
 		Scanner user_input = new Scanner(System.in);
 		String user_query = user_input.nextLine();
 		String[] query_terms = user_query.split("\\s");
 		int[] n_i = new int[query_terms.length];
 
+/*
 		int qfi,ni,fi;
 		int[] qfi_all = new int[query_terms.length];
 		int i,j,k,kk;
@@ -261,8 +283,15 @@ public class ranking {
 		}
 
 		// Ranking time		
+		int n = 5;	// TODO Update this to 100 later
+		String[] topnjsons = toptweets(n,entirejsons,scoresList);	// Store top n tweet jsons in topnjsons
 
-
+		// Testing Search
+		Scanner scn = new Scanner(System.in);
+		String new_query = scn.nextLine();
+		int index = search(new_query, topnjsons);
+		if (index == -1) System.out.println("Didn't find the query");
+		else System.out.println("Found the query at index " + index);
 */
 
 		// Test query and tweets. Works
@@ -283,16 +312,6 @@ public class ranking {
 //			System.out.println(i+1 + ": " + topnTweets[i]);
 //		}
 
-		// Get a single line of input from the user
-//		System.out.print("Enter query: ");
-//		Scanner user_input = new Scanner(System.in);
-//		String user_query = "";
-//		user_query += user_input.nextLine();
-//		System.out.println("User query: " + user_query);
-
-//		int x = search(user_query, topnTweets);
-//		if (x == -1) System.out.println("User query not found in top " + n + " tweets");
-//		else System.out.println("Found user query at rank " + x);
 
 	}
 }
