@@ -12,14 +12,16 @@ public class ranking {
 
 	public static double avgdl(String[] allTweets) {
 		double total_words = 0.0;
-		String[] tweet_words;
+//		String[] tweet_words;
 		for (String s:allTweets) {
-			tweet_words = s.split("\\s");
-			total_words += tweet_words.length;
+//			tweet_words = s.split("\\s");
+//			total_words += tweet_words.length;		// Add number of words in tweet
+			total_words += s.size();			// Add size of tweet
 		}
 		return total_words / allTweets.length;
 	}
 
+	// Calculate ni incorrectly (?) ni is # of docs the query term appears in
 	public static double tweet_num(String[] allTweets, String query_term) {
 		double ni = 0;
 		for (String s:allTweets) {
@@ -29,6 +31,7 @@ public class ranking {
 	}
 
 	public static double BM25(String Query, String Tweet, String[] allTweets, double avg_doc_length) {
+//	public static double BM25(String Query, String Tweet, int N, int ni, int fi, double avg_doc_length) {
 		double k1 = 1.2;
 		double k2 = 100;
 		double b = 0.75;
