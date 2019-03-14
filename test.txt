@@ -1,1 +1,3 @@
-Hi Friends
+Hello	{[TweetJSON],[TWEETJSON2],[loc:"hi"],[hashtag:"su"],[Hello there friend],[prof:"fr"],[4]}
+Hi	{[Tweety],[Bob],[f],[g],["hi loser Hi"],[t],[3]}
+Cop	{[Tweety],[Bob],[f],[g],["hi Cop ser Hi"],[t],[3]}
