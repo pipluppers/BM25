@@ -85,11 +85,6 @@ public class ranking {
 				tmp = arr[i]; arr[i] = arr[ind]; arr[ind] = tmp;
 			}
 		}
-		System.out.println("Verifying that it is sorted");
-		for (i = 0; i < arr.length; ++i) {
-			System.out.print(arr[i] + " ");
-		}
-		System.out.print("\n");
 		return arr;	
 	}
 	public static void main(String args[]) throws FileNotFoundException,IOException {
@@ -132,15 +127,6 @@ public class ranking {
 				if (unique_query_terms.get(i).equals(query_terms[j])) ++qfi_all[i];
 			}
 		}
-		for (i = 0; i < unique_query_terms.size(); ++i) {
-			System.out.println(unique_query_terms.get(i) + " " + qfi_all[i]);
-		}
-
-		System.out.print("\n");
-		System.out.println("\tEnd Sanity Check");
-
-		int ni,fi;
-
 
 		// TODO Pattern changed
 		String tjson = "\\{([^\\}]*)\\}";
@@ -157,34 +143,28 @@ public class ranking {
 		String jason,content;
 		content = jason ="abc";
 
-
 		// Calculate n_i values and build the list of tweets/documents
 		for (k = 0; k < unique_query_terms.size(); ++k) {
 			//if the term equals something in allkeyvalues, gt all the tweets and add to a list
 			//loop through list later when done. Calculate for each query term
-
 			n_i[k] = 0;	// Initialize the ni for the this term as 0
 
 			for (i = 0; i < allkeyvalues.size(); ++i) {
 				// TODO Split off something else
 				String[] keyvalue = allkeyvalues.get(i).split("\\t");
-				System.out.print("Splitting the key value pair:\n\t" + keyvalue[0] + "\n\t" + keyvalue[1] + "\n");
 
 				// if this term exists in any of the tweets. Should only happen once per query term
 				// if it doesn't exist, n_i[k] = 0
 				if (unique_query_terms.get(k).equals(keyvalue[0])) {
 					sz = 0;
-					tjm = tj.matcher(keyvalue[1]);		// Split into individual jsons
+					tjm = tj.matcher(keyvalue[1]);		// Split into individual jsons TODO
 					while(tjm.find()) {
 						++sz;
 						jason = tjm.group(1);
 						m = p.matcher(jason);		// Break json into 7 parts
-						System.out.println(jason);
 						while(m.find()) content = m.group(5);		// TODO
-						System.out.println("Content: " + content);
 						if (allContents.size() == 0) {
-							allContents.add(content);
-							entirejsons.add(jason);
+							allContents.add(content); entirejsons.add(jason);
 						}
 						else {
 							dontadd = false;
@@ -196,25 +176,19 @@ public class ranking {
 									kk = allContents.size();
 								}
 							}
-							// Add tweet text to allContents
+							// Add tweet text to allContents and entire tweet JSON to entire jsons
 							// Add entire tweet JSON to entirejsons
 							if (dontadd == false) {
 								//System.out.println("Adding tweet to allContents");
-								allContents.add(content);
-								entirejsons.add(jason);
+								allContents.add(content); entirejsons.add(jason);
 							}
 						}
-								
 					}
 					n_i[k] = sz;	// Should contain the n_values for every single query term
 					i = allkeyvalues.size();	// Stop the loop early. Term should only match a single key
 				}
 			}
 		}
-		System.out.println("Sanity Check");
-		for (String rgn: allContents) System.out.println(rgn);
-		System.out.println("Done with sanity check");
-
 		// Calculate score for each tweet
 		double avg_doc_length = avgdl(allContents);
 		double[] scoresList = new double[entirejsons.size()];	
@@ -222,14 +196,18 @@ public class ranking {
 			scoresList[i] = BM25(unique_query_terms, allContents.get(i), n_i, qfi_all, N, avg_doc_length);
 		}
 		
-		// Ranking time		
+		// Find top n Tweets and print them along with their scores
 		int n = 2;	// TODO Update this to 100 later
 		String[] topnjsons = toptweets(n,entirejsons,scoresList);	// Store top n tweet jsons in topnjsons
+		scoresList = sort_score(scoresList);				// Sort the scores
+		for (i = 0; i < topnjsons.length; ++i) System.out.print(topnjsons[i] + "\n\tScore: " + scoresList[i] + "\n");
 
-		scoresList = sort_score(scoresList);
-		for (i = 0; i < topnjsons.length; ++i) {
-			System.out.println(topnjsons[i]);
-			System.out.println("\tScore: " + scoresList[i]);
-		}
+		/*
+		// Search Function
+		System.out.println("Enter text to search for: ");
+		Scanner new_scan = new Scanner(System.in);
+		String second_query = new_scan.nextLine();
+		int query_index = search(second_query, topnjsons);
+		*/
 	}
 }
