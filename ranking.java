@@ -29,9 +29,8 @@ public class ranking {
 
 	// TODO Don't Calculate the same query over and over. Need to change qfi
 	// n_i and qfi are arrays with the same size of the number of words in the query
-	public static double BM25(String query, String tweet, int[] ni, int[] qfi, int N, double avg_doc_length) {
+	public static double BM25(List<String> unique_query_terms, String tweet, int[] ni, int[] qfi, int N, double avg_doc_length) {
 		String[] tweet_terms = tweet.split("\\s");
-		String[] query_terms = query.split("\\s");
 		int i,j;
 		double doc_length = tweet.length();	// Length of the entire tweet (NOT the number of words)
 		double x,y,z,fi;
@@ -39,10 +38,10 @@ public class ranking {
 		double k1 = 1.2; double k2 = 100; double b = 0.75;
 		double K = k1 * ( (1.0 - b) + b * (doc_length / avg_doc_length));
 
-		for (i = 0; i < query_terms.length; ++i) {
+		for (i = 0; i < unique_query_terms.size(); ++i) {
 			fi = 0;		// fi is the number of times the query term appears in the tweet
 			for (j = 0; j < tweet_terms.length; ++j) {
-				if (query_terms[i].equals(tweet_terms[j])) ++fi;
+				if (unique_query_terms.get(i).equals(tweet_terms[j])) ++fi;
 			}
 			x = Math.log10( (N - ni[i] + 0.5) / (ni[i] + 0.5) );
 			y = ((k1 + 1) * fi) / (K + fi);
@@ -94,20 +93,16 @@ public class ranking {
 		return arr;	
 	}
 	public static void main(String args[]) throws FileNotFoundException,IOException {
-		// File input
-		// Store contents of file in str
+		int i,j,k,kk;
+		boolean dontadd;
+		String st, user_query;
+		List<String> allkeyvalues = new ArrayList<String>();	// Holds every single key-value pair
+
+		// Load file
 		File f = new File("test.txt");
 		BufferedReader br = new BufferedReader(new FileReader(f));
-		String st;
-		
-		
-		//Term	{[Name],[ScreenName],[Location],[Hashtag],[Content],[Profile_img_url],[wordcount],...}	
-		//st will be a single line. Split via tabs to get the term
+		while ((st = br.readLine()) != null) allkeyvalues.add(st);
 
-		List<String> allkeyvalues= new ArrayList<String>();		// No add or pushback for arrays
-		while ((st = br.readLine()) != null) {
-			allkeyvalues.add(st);
-		}
 		// TODO Split allkeyvalues by newline? Whatever separates the key-value pairs
 		int N = allkeyvalues.size();	// Should count num of newlines
 		System.out.println("N is " + N);
@@ -115,14 +110,36 @@ public class ranking {
 		// Get query from user
 		System.out.println("Enter your query: ");
 		Scanner user_input = new Scanner(System.in);
-		String user_query = user_input.nextLine();
+		user_query = user_input.nextLine();
 		String[] query_terms = user_query.split("\\s");
-		int[] n_i = new int[query_terms.length];
 
+		// Get Unique Query Terms and calculate qfi
+		List<String> unique_query_terms = new ArrayList<String>();
+		for (i = 0; i < query_terms.length; ++i) {
+			dontadd = false;
+			for (j = 0; j < unique_query_terms.size(); ++j) {
+				if (query_terms[i].equals(unique_query_terms.get(j))) {
+					dontadd = true; j = unique_query_terms.size();
+				}
+			}
+			if (dontadd == false) unique_query_terms.add(query_terms[i]);
+		}
+		int[] n_i = new int[unique_query_terms.size()];
+		int[] qfi_all = new int[unique_query_terms.size()];
+		for (i = 0; i < unique_query_terms.size(); ++i) {
+			qfi_all[i] = 0;
+			for (j = 0; j < query_terms.length; ++j) {
+				if (unique_query_terms.get(i).equals(query_terms[j])) ++qfi_all[i];
+			}
+		}
+		for (i = 0; i < unique_query_terms.size(); ++i) {
+			System.out.println(unique_query_terms.get(i) + " " + qfi_all[i]);
+		}
 
-		int qfi,ni,fi;
-		int[] qfi_all = new int[query_terms.length];
-		int i,j,k,kk;
+		System.out.print("\n");
+		System.out.println("\tEnd Sanity Check");
+
+		int ni,fi;
 
 
 		// TODO Pattern changed
@@ -139,11 +156,10 @@ public class ranking {
 		int sz = 0;
 		String jason,content;
 		content = jason ="abc";
-		boolean dontadd;
 
 
 		// Calculate n_i values and build the list of tweets/documents
-		for (k = 0; k < query_terms.length; ++k) {
+		for (k = 0; k < unique_query_terms.size(); ++k) {
 			//if the term equals something in allkeyvalues, gt all the tweets and add to a list
 			//loop through list later when done. Calculate for each query term
 
@@ -154,10 +170,9 @@ public class ranking {
 				String[] keyvalue = allkeyvalues.get(i).split("\\t");
 				System.out.print("Splitting the key value pair:\n\t" + keyvalue[0] + "\n\t" + keyvalue[1] + "\n");
 
-
 				// if this term exists in any of the tweets. Should only happen once per query term
 				// if it doesn't exist, n_i[k] = 0
-				if (query_terms[k].equals(keyvalue[0])) {
+				if (unique_query_terms.get(k).equals(keyvalue[0])) {
 					sz = 0;
 					tjm = tj.matcher(keyvalue[1]);		// Split into individual jsons
 					while(tjm.find()) {
@@ -199,31 +214,17 @@ public class ranking {
 		System.out.println("Sanity Check");
 		for (String rgn: allContents) System.out.println(rgn);
 		System.out.println("Done with sanity check");
-		
-		// TODO Need to fix qfi. DOesn't work for multiple words. qfi is too long
-		for (i = 0; i < query_terms.length; ++i) {
-			qfi = 0;
-			for (j = 0; j < query_terms.length; ++j) {
-				if (query_terms[i].equals(query_terms[j])) ++qfi;
-			}
-			qfi_all[i] = qfi;
-		}
 
 		// Calculate score for each tweet
 		double avg_doc_length = avgdl(allContents);
 		double[] scoresList = new double[entirejsons.size()];	
 		for (i = 0; i < entirejsons.size(); ++i) {
-			scoresList[i] = BM25(user_query, allContents.get(i), n_i, qfi_all, N, avg_doc_length);
+			scoresList[i] = BM25(unique_query_terms, allContents.get(i), n_i, qfi_all, N, avg_doc_length);
 		}
 		
 		// Ranking time		
 		int n = 2;	// TODO Update this to 100 later
 		String[] topnjsons = toptweets(n,entirejsons,scoresList);	// Store top n tweet jsons in topnjsons
-
-		System.out.println("Size of topnjsons: " + topnjsons.length);
-
-		for (String yyy:topnjsons) System.out.println(yyy);
-		System.out.println("------");
 
 		scoresList = sort_score(scoresList);
 		for (i = 0; i < topnjsons.length; ++i) {
