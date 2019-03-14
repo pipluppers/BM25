@@ -7,103 +7,11 @@ import java.util.regex.Matcher;
 import java.util.*;
 
 public class ranking {
-
 	public static double avgdl(List<String> allTweets) {
 		double total_words = 0.0;
-//		String[] tweet_words;
-		for (String s:allTweets) {
-//			tweet_words = s.split("\\s");
-//			total_words += tweet_words.length;		// Add number of words in tweet
-			total_words += s.length();			// Add size of tweet
-		}
+		for (String s:allTweets) total_words += s.length();			// Add size of tweet
 		return total_words / allTweets.size();
 	}
-
-/*
-	public static double BM25(String Query, String Tweet, String[] allTweets, double avg_doc_length) {
-//	public static double BM25(String Query, String Tweet, int N, int ni, int fi, double avg_doc_length) {
-		double k1 = 1.2;
-		double k2 = 100;
-		double b = 0.75;
-
-		double ni;	// Number of tweets this query term appears in
-		double N = allTweets.length;	// Number of tweets we have
-		double fi;	// Number of times the query term appears in tweet
-		double qfi;	// Number of times the query term appears in query
-		double K;
-		double doc_length;
-
-		String[] query_words = Query.split("\\s");
-		String[] tweet_words = Tweet.split("\\s");
-		// Calculate K
-		doc_length = tweet_words.length;
-		K = k1 * ((1.0-b) + b * (doc_length / avg_doc_length));
-
-		double score,x,y,z;
-		x = y = z = score = 0.0;
-		for (String s:query_words) {
-			qfi = fi = 0;
-			// Calculate qfi and fi
-			for (String s2:query_words) if (s.equals(s2)) qfi++;
-			for (String s3:tweet_words) if (s.equals(s3)) fi++;
-			//System.out.println("Word is " + s + " and qfi = " + qfi + " and fi = " + fi);
-
-			ni = tweet_num(allTweets, s);
-
-			x = Math.log10( (N-ni+0.5)/(ni+0.5) );
-			y = ((k1 + 1)*fi) / (K + fi);
-			z = ((k2 + 1)*qfi) / (k2 + qfi);
-			score += (x*y*z);
-		}
-		return score;
-	}
-*/
-
-/*
-	// Returns the top n tweets for a given query
-	public static String[] TopNTweets(String query, String[] tweets, int n) {
-		
-		System.out.println("Average tweet length: " + avg_tweets_l);
-		
-
-		// Score all tweets
-		double[] scoresList = new double[tweets.length];
-		int i = 0;
-		for (i = 0; i < tweets.length; ++i) {
-			// BM25(Query, Tweet, List of all tweets, avg tweet length)
-			scoresList[i] = BM25(query, tweets[i], tweets, avg_tweets_l);
-			//System.out.println("Tweet Text: " + tweets[i] + "\n\tScore: " + scoresList[i]);
-		}
-
-		
-		// Rank tweets in order
-		double maxScore = 0.0;
-		double prevMax = 10000;	// so we don't find the same max score
-		double[] topnScores = new double[n];
-		String[] topnTweets = new String[n];
-		int j = 0;
-		int ind = 0;		// Store the index of where we found the max
-		for (i = 0; i < n; ++i) {	// Finding top 2
-			maxScore = -1.0;
-			for (j = 0; j < tweets.length; ++j) {
-				if (maxScore < scoresList[j] && scoresList[j] < prevMax) {
-					maxScore = scoresList[j];
-					ind = j;
-				}
-			}
-			prevMax = maxScore;	// Update previous max so we don't register this as max again
-			topnScores[i] = scoresList[ind];
-			topnTweets[i] = tweets[ind];
-		}
-
-		// Print top n Tweets		
-		System.out.println("Top " + n + " tweets:");
-		for (i = 0; i < topnScores.length; ++i) {
-			System.out.println(i+1 + ": " + topnTweets[i] + "\n\tScore: " + topnScores[i]);
-		}
-		return topnTweets;
-	}
-*/
 
 	// TODO Return index of Tweet JSONs
 	// Exact Search
@@ -119,8 +27,7 @@ public class ranking {
 		return -1;
 	}
 
-	// Redo of BM25
-	// Recalculate fi
+	// TODO Don't Calculate the same query over and over. Need to change qfi
 	// n_i and qfi are arrays with the same size of the number of words in the query
 	public static double BM25(String query, String tweet, int[] ni, int[] qfi, int N, double avg_doc_length) {
 		String[] tweet_terms = tweet.split("\\s");
@@ -137,25 +44,11 @@ public class ranking {
 			for (j = 0; j < tweet_terms.length; ++j) {
 				if (query_terms[i].equals(tweet_terms[j])) ++fi;
 			}
-
-			System.out.println("fi: " + fi);
-			System.out.println("ni: " + ni[i]);
-			System.out.println("K: " + K);
-			System.out.println("qfi: " + qfi[i]);
-			System.out.println("N: " + N);
-
-			System.out.println( (N-ni[i]+0.5)/(ni[i]+0.5));
-
 			x = Math.log10( (N - ni[i] + 0.5) / (ni[i] + 0.5) );
 			y = ((k1 + 1) * fi) / (K + fi);
 			z = ((k2 + 1) * qfi[i]) / (k2 + qfi[i]);
-			System.out.println("x: " + x);
-			System.out.println("y: " + y);
-			System.out.println("z: " + z);
 			score += (x*y*z);
-			System.out.println(score);
 		}
-		System.out.println("OVerall Score: " + score);
 		return score;
 	}
 
@@ -166,12 +59,10 @@ public class ranking {
 		String[] topnjsons = new String[n];
 		int i,j,ind;
 		for (i = 0; i < n; ++i) {
-			max = -1.0;
-			ind = 0;
+			max = -1.0; ind = 0;
 			for (j = 0; j < scoresList.length; ++j) {
 				if (max < scoresList[j] && scoresList[j] < prevMax) {	// Don't get previous maxes
-					max = scoresList[j];
-					ind = j;		// Index of largest score
+					max = scoresList[j]; ind = j;		// Index of largest score
 				}
 			}
 			topnjsons[i] = jsonsList.get(ind);	// Get the corresponding json with the largest score
@@ -180,20 +71,26 @@ public class ranking {
 		return topnjsons;	
 	}
 
+	// Sorted from highest to lowest
 	public static double[] sort_score(double[] arr) {
-		double min,tmp;
+		double max,tmp;
 		int i,j,ind;
 		for (i = 0; i < arr.length; ++i) {
-			min = arr[i]; ind = i;
+			max = arr[i]; ind = i;
 			for (j = i + 1; j < arr.length; ++j) {
-				if (min > arr[j]) {
-					min = arr[j]; ind = j;
+				if (max < arr[j]) {
+					max = arr[j]; ind = j;
 				}
 			}
 			if (ind != i) {
 				tmp = arr[i]; arr[i] = arr[ind]; arr[ind] = tmp;
 			}
 		}
+		System.out.println("Verifying that it is sorted");
+		for (i = 0; i < arr.length; ++i) {
+			System.out.print(arr[i] + " ");
+		}
+		System.out.print("\n");
 		return arr;	
 	}
 	public static void main(String args[]) throws FileNotFoundException,IOException {
@@ -303,7 +200,7 @@ public class ranking {
 		for (String rgn: allContents) System.out.println(rgn);
 		System.out.println("Done with sanity check");
 		
-
+		// TODO Need to fix qfi. DOesn't work for multiple words. qfi is too long
 		for (i = 0; i < query_terms.length; ++i) {
 			qfi = 0;
 			for (j = 0; j < query_terms.length; ++j) {
@@ -311,17 +208,13 @@ public class ranking {
 			}
 			qfi_all[i] = qfi;
 		}
-		double avg_doc_length = avgdl(allContents);
 
-		// Loop through the tweets now
-		// Have a score for each tweet
+		// Calculate score for each tweet
+		double avg_doc_length = avgdl(allContents);
 		double[] scoresList = new double[entirejsons.size()];	
-	
 		for (i = 0; i < entirejsons.size(); ++i) {
 			scoresList[i] = BM25(user_query, allContents.get(i), n_i, qfi_all, N, avg_doc_length);
-			System.out.println(scoresList[i]);
 		}
-
 		
 		// Ranking time		
 		int n = 2;	// TODO Update this to 100 later
