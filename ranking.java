@@ -7,6 +7,11 @@ import java.util.regex.Matcher;
 import java.util.*;
 
 public class ranking {
+
+	// HOW TO RUN
+	// javac ranking.java
+	// java ranking test2.txt
+
 	public static double avgdl(List<String> allTweets) {
 		double total_words = 0.0;
 		for (String s:allTweets) total_words += s.length();			// Add size of tweet
@@ -27,7 +32,6 @@ public class ranking {
 		return -1;
 	}
 
-	// TODO Don't Calculate the same query over and over. Need to change qfi
 	// n_i and qfi are arrays with the same size of the number of words in the query
 	public static double BM25(List<String> unique_query_terms, String tweet, int[] ni, int[] qfi, int N, double avg_doc_length) {
 		String[] tweet_terms = tweet.split("\\s");
@@ -58,7 +62,7 @@ public class ranking {
 		String[] topnjsons = new String[n];
 		int i,j,ind;
 		for (i = 0; i < n; ++i) {
-			max = -1.0; ind = 0;
+			max = -999999; ind = 0;
 			for (j = 0; j < scoresList.length; ++j) {
 				if (max < scoresList[j] && scoresList[j] < prevMax) {	// Don't get previous maxes
 					max = scoresList[j]; ind = j;		// Index of largest score
@@ -90,17 +94,14 @@ public class ranking {
 	public static void main(String args[]) throws FileNotFoundException,IOException {
 		int i,j,k,kk;
 		boolean dontadd;
-		String st, user_query;
+		String st, user_query, filename;
 		List<String> allkeyvalues = new ArrayList<String>();	// Holds every single key-value pair
 
 		// Load file
-		File f = new File("test.txt");
+		filename = args[0];
+		File f = new File(filename);
 		BufferedReader br = new BufferedReader(new FileReader(f));
-		while ((st = br.readLine()) != null) allkeyvalues.add(st);
-
-		// TODO Split allkeyvalues by newline? Whatever separates the key-value pairs
-		int N = allkeyvalues.size();	// Should count num of newlines
-		System.out.println("N is " + N);
+		while ((st = br.readLine()) != null) allkeyvalues.add(st);	// Assumes tweet jsons are on different lines
 
 		// Get query from user
 		System.out.println("Enter your query: ");
@@ -119,6 +120,8 @@ public class ranking {
 			}
 			if (dontadd == false) unique_query_terms.add(query_terms[i]);
 		}
+		int ni,N;
+		ni = N = 0;
 		int[] n_i = new int[unique_query_terms.size()];
 		int[] qfi_all = new int[unique_query_terms.size()];
 		for (i = 0; i < unique_query_terms.size(); ++i) {
@@ -128,63 +131,60 @@ public class ranking {
 			}
 		}
 
-		// TODO Pattern changed
-		String tjson = "\\{([^\\}]*)\\}";
-		String pattern = "\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\],\\[([^\\]]*)\\]";
+		// group1 is TERM, group2 is ALLTWEETJSONS
+		String tjson = "(.*)   \"total count\" : (\\d+)(.*)";
+		// group1 is NAME, group2 is SCREEN_NAME, group3 is LOCATION, group4 is CONTENT, group5 is PROFILE_IMG_URL, group6 is fi
+		String pattern = ", \\[\"name\" : ([^\\]]*), \"screen name\" : ([^\\]]*), \"location\" : ([^\\]]*), \"content\" : \"([^\\]]*)\", \"profile image url\" : ([^\\]]*), \"frequency in tweet\" : (\\d+)\\]";
 		Pattern tj = Pattern.compile(tjson);
 		Matcher tjm;
 		Pattern p = Pattern.compile(pattern);
 		Matcher m;
 		
+		for (i = 0; i < allkeyvalues.size(); ++i) {
+			tjm = tj.matcher(allkeyvalues.get(i));
+			while(tjm.find()) N += Integer.parseInt(tjm.group(2));
+		}
+
+
 		List<String> entirejsons = new ArrayList<String>();	// List to hold all individual jsons
 		List<String> allContents = new ArrayList<String>();	// Holds all the tweet text of the above jsons
+		List<String> allHandles = new ArrayList<String>();
 
-		int sz = 0;
-		String jason,content;
-		content = jason ="abc";
+		String jason,content,term,tweetjsons,screen_name;
+		content = jason = term = screen_name = tweetjsons = "abc";
 
 		// Calculate n_i values and build the list of tweets/documents
 		for (k = 0; k < unique_query_terms.size(); ++k) {
-			//if the term equals something in allkeyvalues, gt all the tweets and add to a list
-			//loop through list later when done. Calculate for each query term
 			n_i[k] = 0;	// Initialize the ni for the this term as 0
-
 			for (i = 0; i < allkeyvalues.size(); ++i) {
-				// TODO Split off something else
-				String[] keyvalue = allkeyvalues.get(i).split("\\t");
-
+				tjm = tj.matcher(allkeyvalues.get(i));
+				while(tjm.find()) {
+					term = tjm.group(1); ni = Integer.parseInt(tjm.group(2)); tweetjsons = tjm.group(3);
+				}
 				// if this term exists in any of the tweets. Should only happen once per query term
 				// if it doesn't exist, n_i[k] = 0
-				if (unique_query_terms.get(k).equals(keyvalue[0])) {
-					sz = 0;
-					tjm = tj.matcher(keyvalue[1]);		// Split into individual jsons TODO
-					while(tjm.find()) {
-						++sz;
-						jason = tjm.group(1);
-						m = p.matcher(jason);		// Break json into 7 parts
-						while(m.find()) content = m.group(5);		// TODO
+				if (unique_query_terms.get(k).equals(term)) {
+					n_i[k] = ni;
+					m = p.matcher(tweetjsons);			
+					while(m.find()) {
+						content = m.group(4); screen_name = m.group(2); jason = m.group(0).substring(2);
 						if (allContents.size() == 0) {
-							allContents.add(content); entirejsons.add(jason);
+							allContents.add(content); entirejsons.add(jason); allHandles.add(screen_name);
 						}
 						else {
 							dontadd = false;
 							for (kk = 0; kk < allContents.size();++kk) {
 								// If this tweet exists in our jsons already, don't add it
-								if (content.equals(allContents.get(kk))) {
-									System.out.println("Found the same tweet");
+								if (content.equals(allContents.get(kk)) && screen_name.equals(allHandles.get(kk))) {
 									dontadd = true;
 									kk = allContents.size();
-								}
+								}	
 							}
-							// Add tweet text to allContents and entire tweet JSON to entire jsons
-							// Add entire tweet JSON to entirejsons
 							if (dontadd == false) {
-								//System.out.println("Adding tweet to allContents");
-								allContents.add(content); entirejsons.add(jason);
+								allContents.add(content); entirejsons.add(jason); allHandles.add(screen_name);
 							}
 						}
 					}
-					n_i[k] = sz;	// Should contain the n_values for every single query term
 					i = allkeyvalues.size();	// Stop the loop early. Term should only match a single key
 				}
 			}
@@ -197,7 +197,7 @@ public class ranking {
 		}
 		
 		// Find top n Tweets and print them along with their scores
-		int n = 2;	// TODO Update this to 100 later
+		int n = 100;	// TODO Update this to 100 later
 		String[] topnjsons = toptweets(n,entirejsons,scoresList);	// Store top n tweet jsons in topnjsons
 		scoresList = sort_score(scoresList);				// Sort the scores
 		for (i = 0; i < topnjsons.length; ++i) System.out.print(topnjsons[i] + "\n\tScore: " + scoresList[i] + "\n");
