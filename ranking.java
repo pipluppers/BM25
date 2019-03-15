@@ -22,11 +22,13 @@ public class ranking {
 	// Exact Search
 	// Return -1 if not found
 	public static int search(String query, String[] topntweetsjsons) {
-		int query_rank = -1;
+		String pattern = "\\[\"name\" : ([^\\]]*), \"screen name\" : ([^\\]]*), \"location\" : ([^\\]]*), \"content\" : \"([^\\]]*)\", \"profile image url\" : ([^\\]]*), \"frequency in tweet\" : (\\d+)\\]";
+		Pattern p = Pattern.compile(pattern);
+		Matcher m;
 		for (int i = 0; i < topntweetsjsons.length; ++i) {
-			if (query.equals(topntweetsjsons[i])) {
-				query_rank = i + 1;
-				return query_rank;
+			m = p.matcher(topntweetsjsons[i]);
+			while(m.find()) {
+				if (query.equals(m.group(4))) return i + 1;
 			}
 		}
 		return -1;
@@ -197,17 +199,19 @@ public class ranking {
 		}
 		
 		// Find top n Tweets and print them along with their scores
-		int n = 100;	// TODO Update this to 100 later
+		int n = 2;	// TODO Update this to 100 later
 		String[] topnjsons = toptweets(n,entirejsons,scoresList);	// Store top n tweet jsons in topnjsons
 		scoresList = sort_score(scoresList);				// Sort the scores
-		for (i = 0; i < topnjsons.length; ++i) System.out.print(topnjsons[i] + "\n\tScore: " + scoresList[i] + "\n");
+		System.out.println("Relevant tweets");
+		for (i = 0; i < topnjsons.length; ++i) 
+			System.out.print((i+1) + ") " + topnjsons[i] + "\n\tScore: " + scoresList[i] + "\n");
 
-		/*
 		// Search Function
 		System.out.println("Enter text to search for: ");
 		Scanner new_scan = new Scanner(System.in);
 		String second_query = new_scan.nextLine();
 		int query_index = search(second_query, topnjsons);
-		*/
+		if (query_index == -1) System.out.println("Didn't find new query in the top n tweet");
+		else System.out.println("Tweet is at rank " + query_index);
 	}
 }
