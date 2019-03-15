@@ -141,16 +141,16 @@ public class ranking {
 		Matcher tjm;
 		Pattern p = Pattern.compile(pattern);
 		Matcher m;
-		
+	
+		// Calculate N	
 		for (i = 0; i < allkeyvalues.size(); ++i) {
 			tjm = tj.matcher(allkeyvalues.get(i));
 			while(tjm.find()) N += Integer.parseInt(tjm.group(2));
 		}
 
-
 		List<String> entirejsons = new ArrayList<String>();	// List to hold all individual jsons
 		List<String> allContents = new ArrayList<String>();	// Holds all the tweet text of the above jsons
-		List<String> allHandles = new ArrayList<String>();
+		List<String> allHandles = new ArrayList<String>();	// All Screen Names
 
 		String jason,content,term,tweetjsons,screen_name;
 		content = jason = term = screen_name = tweetjsons = "abc";
